@@ -2,17 +2,25 @@ version: "3"
 
 services:
   server:
-    build: .
+    image: registry.miem.hse.ru/239/239-application-notifier/server:0.1.1
     restart: always
     environment:
       - CABINET_URL=
       - MONGO_CONNSTRING=
       - SECRET=
+    ports:
+      - 8000:8000
+    depends_on:
+      - mongo
+  timer:
+    image: registry.miem.hse.ru/239/239-application-notifier/timer:0.1.1
+    restart: always
+    environment:
+      - CABINET_URL=
+      - MONGO_CONNSTRING=
       - ZULIP_URL=
       - BOT_EMAIL=
       - BOT_TOKEN=
-    ports:
-      - 8000:8000
     depends_on:
       - mongo
   mongo:
