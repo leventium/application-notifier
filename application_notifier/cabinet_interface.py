@@ -4,8 +4,8 @@ import httpx
 class CabinetInterface:
     def __init__(self, base_url: str):
         self.client = httpx.AsyncClient(base_url=base_url)
-    
-    async def get_all_applications(self, project_id: int) -> list(dict):
+
+    async def get_all_applications(self, project_id: int) -> list[dict]:
         res = await self.client.get(
             f"/public-api/students/project/application/{project_id}"
         )
@@ -24,6 +24,6 @@ class CabinetInterface:
         if res.json()["code"] == 20000:
             return True
         return False
-    
+
     async def close(self):
         await self.client.aclose()
