@@ -41,7 +41,7 @@ python-versions = ">=3.6"
 name = "charset-normalizer"
 version = "2.1.1"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6.0"
 
@@ -52,7 +52,7 @@ unicode-backport = ["unicodedata2"]
 name = "click"
 version = "8.1.3"
 description = "Composable command line interface toolkit"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -63,7 +63,7 @@ colorama = {version = "*", markers = "platform_system == \"Windows\""}
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
-category = "main"
+category = "dev"
 optional = false
 python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 
@@ -71,7 +71,7 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7
 name = "distro"
 version = "1.8.0"
 description = "Distro - an OS platform information API"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -106,7 +106,7 @@ test = ["pytest (>=6)"]
 name = "fastapi"
 version = "0.87.0"
 description = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -199,7 +199,7 @@ python-versions = "*"
 name = "matrix-client"
 version = "0.4.0"
 description = "Client-Server SDK for Matrix"
-category = "main"
+category = "dev"
 optional = false
 python-versions = "*"
 
@@ -255,7 +255,7 @@ python-versions = ">=3.6"
 name = "pydantic"
 version = "1.10.2"
 description = "Data validation and settings management using python type hints"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -339,7 +339,7 @@ cli = ["click (>=5.0)"]
 name = "requests"
 version = "2.28.1"
 description = "Python HTTP for Humans."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7, <4"
 
@@ -379,7 +379,7 @@ python-versions = ">=3.7"
 name = "starlette"
 version = "0.21.0"
 description = "The little ASGI library that shines."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -401,7 +401,7 @@ python-versions = ">=3.7"
 name = "typing-extensions"
 version = "4.4.0"
 description = "Backported and Experimental Type Hints for Python 3.7+"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -409,7 +409,7 @@ python-versions = ">=3.7"
 name = "urllib3"
 version = "1.26.13"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*"
 
@@ -422,7 +422,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 name = "uvicorn"
 version = "0.20.0"
 description = "The lightning-fast ASGI server."
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.7"
 
@@ -437,7 +437,7 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 name = "zulip"
 version = "0.8.2"
 description = "Bindings for the Zulip message API"
-category = "main"
+category = "dev"
 optional = false
 python-versions = ">=3.6"
 
@@ -451,7 +451,7 @@ typing-extensions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "ffa8b85ec5db0106f1ea6a342170e058b14eee19dd0fc6d75708b2ad99c9e9e2"
+content-hash = "bd725f09568c19aa4090f29f9b51e61f6849203446e62a344499a6341a1f2a8d"
 
 [metadata.files]
 anyio = [
