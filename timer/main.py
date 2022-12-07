@@ -22,7 +22,7 @@ MSG_TEXT = """\
 """
 
 
-async def check_new_applications():
+async def check_new_applications():  # TODO make application status checks
     for project in tuple(db.subscribed_projects.find()):
         cabinet_applications = await cabinet.get_all_applications(
             project["_id"]
@@ -37,7 +37,7 @@ async def check_new_applications():
         if len(current_applications) != len(previous_applications):
             new_applications = [
                 app for app in current_applications
-                if app not in previous_applications  # TODO make application status checks
+                if app not in previous_applications
             ]
             for app in new_applications:
                 zulip_client.send_message({
@@ -66,8 +66,6 @@ async def main():
         while True:
             await check_new_applications()
             time.sleep(3600)
-    except:
-        pass
     finally:
         await cabinet.close()
         mongo.close()

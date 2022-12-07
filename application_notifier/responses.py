@@ -1,8 +1,8 @@
-from fastapi import Response, status
+from fastapi import status
 from fastapi.responses import JSONResponse
 
 
-UNAUTHORIZED =JSONResponse(
+UNAUTHORIZED = JSONResponse(
     status_code=status.HTTP_401_UNAUTHORIZED,
     content={
         "error": {
@@ -12,7 +12,7 @@ UNAUTHORIZED =JSONResponse(
     media_type="application/json"
 )
 
-PROJECT_NOT_FOUND =JSONResponse(
+PROJECT_NOT_FOUND = JSONResponse(
     status_code=status.HTTP_404_NOT_FOUND,
     content={
         "error": {
@@ -22,7 +22,7 @@ PROJECT_NOT_FOUND =JSONResponse(
     media_type="application/json"
 )
 
-SUCCESS =JSONResponse(
+SUCCESS = JSONResponse(
     status_code=status.HTTP_201_CREATED,
     content={
         "comment": "Successful."
@@ -38,7 +38,7 @@ SUCCESS_DEL = JSONResponse(
     media_type="application/json"
 )
 
-NOT_SUBSCRIBED =JSONResponse(
+NOT_SUBSCRIBED = JSONResponse(
     status_code=status.HTTP_404_NOT_FOUND,
     content={
         "error": {
