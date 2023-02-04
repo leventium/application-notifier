@@ -1,18 +1,13 @@
 import os
 import responses
 from cabinet_interface import CabinetInterface
-from functions import bring_to_mongo_format, check_env
+from functions import bring_to_mongo_format
 from fastapi import APIRouter, Request
 from dotenv import load_dotenv
 import pymongo
 
 
 load_dotenv()
-check_env(
-    "MONGO_CONNSTRING",
-    "CABINET_URL",
-    "SECRET"
-)
 router = APIRouter()
 
 
