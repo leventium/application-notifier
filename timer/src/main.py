@@ -45,7 +45,10 @@ async def check_new_applications():  # TODO make application status checks
                     "type": "stream",
                     "to": project["stream"],
                     "topic": project["topic"],
-                    "content": MSG_TEXT.format(app["name"], app["role"])
+                    "content": MSG_TEXT.format(
+                        app["name"],
+                        app["role"].replace("/ ", " ")
+                    )
                 })
             logger.debug("Refreshing database")
             db.applications.insert_many(new_applications)
@@ -71,7 +74,7 @@ async def main():
         while True:
             logger.debug("Going to function")
             await check_new_applications()
-            time.sleep(30)
+            time.sleep(3600)
     finally:
         await cabinet.close()
         mongo.close()
