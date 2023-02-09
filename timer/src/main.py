@@ -18,8 +18,9 @@ MSG_TEXT = """\
 
 async def check_new_applications():  # TODO make application status checks
     logger.debug("In function")
+    logger.info("New applications check process is starting")
     for project in tuple(db.subscribed_projects.find()):
-        logger.debug("In cycle FOR")
+        logger.info(f"Checking project: {project['_id']}")
         cabinet_applications = await cabinet.get_all_applications(
             project["_id"]
         )
@@ -34,7 +35,7 @@ async def check_new_applications():  # TODO make application status checks
         )
         logger.debug("Checking applications")
         if len(current_applications) != len(previous_applications):
-            logger.debug("New applications were added")
+            logger.debug("New applications were found")
             new_applications = [
                 app for app in current_applications
                 if app not in previous_applications
@@ -74,12 +75,12 @@ async def main():
         while True:
             logger.debug("Going to function")
             await check_new_applications()
-            time.sleep(3600)
+            time.sleep(int(os.getenv("COOLDOWN", "3600")))
     finally:
         await cabinet.close()
         mongo.close()
 
 
 if __name__ == "__main__":
-    logger.debug("Application started")
+    logger.info("Timer service started")
     asyncio.run(main())
