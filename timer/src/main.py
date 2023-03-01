@@ -16,8 +16,7 @@ MSG_TEXT = """\
 """
 
 
-async def check_new_applications():  # TODO make application status checks
-    logger.debug("In function")
+async def check_new_applications():
     logger.info("New applications check process is starting")
     for project in tuple(db.subscribed_projects.find()):
         logger.info(f"Checking project: {project['_id']}")
@@ -35,7 +34,7 @@ async def check_new_applications():  # TODO make application status checks
         )
         logger.debug("Checking applications")
         if len(current_applications) != len(previous_applications):
-            logger.debug("New applications were found")
+            logger.info(f"New applications were found for {project['_id']}")
             new_applications = [
                 app for app in current_applications
                 if app not in previous_applications

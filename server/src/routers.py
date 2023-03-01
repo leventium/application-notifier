@@ -15,7 +15,7 @@ router = APIRouter()
 db = None
 mongo = None
 cabinet = None
-logger.debug("Global variables were defined")
+logger.info("Global variables were defined")
 
 
 @router.on_event("startup")
@@ -23,21 +23,21 @@ async def start():
     global db
     global mongo
     global cabinet
-    logger.debug("Including interfaces")
+    logger.info("Including interfaces")
     mongo = pymongo.MongoClient(os.environ["MONGO_CONNSTRING"])
     db = mongo.db
     cabinet = CabinetInterface(os.environ["CABINET_URL"])
-    logger.debug("Interfaces were included")
+    logger.info("Interfaces were included")
 
 
 @router.on_event("shutdown")
 async def stop():
     global mongo
     global cabinet
-    logger.debug("Closing dependencies")
+    logger.info("Closing dependencies")
     mongo.close()
     await cabinet.close()
-    logger.debug("Dependencies were closed")
+    logger.info("Dependencies were closed")
 
 
 @router.post("/subscription/{slug}/{stream}/{topic}")

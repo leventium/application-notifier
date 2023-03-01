@@ -18,7 +18,7 @@ def get_logger(name: str):
     logger = logging.getLogger(name)
     logger.setLevel(
         int(os.environ["LOG_LEVEL"]) if "LOG_LEVEL" in os.environ
-        else logging.WARNING
+        else logging.INFO
     )
     logger.addHandler(file_handler)
     logger.addHandler(stream_handler)
