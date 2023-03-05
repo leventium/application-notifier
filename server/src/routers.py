@@ -49,18 +49,18 @@ async def create_subscription(slug: int, stream: str,
     try:
         if (request.headers["authorization"] !=
                 f"Bearer {os.environ['SECRET']}"):
-            logger.info("Unauthorized")
+            logger.info("Request is unauthorized")
             return responses.UNAUTHORIZED
     except KeyError:
-        logger.info("Unauthorized")
+        logger.info("Request is unauthorized")
         return responses.UNAUTHORIZED
 
     if not await cabinet.exists(slug):
-        logger.info("Doesn't exist")
+        logger.info(f"Project \"{slug}\" doesn't exist")
         return responses.PROJECT_NOT_FOUND
 
     if tuple(db.subscribed_projects.find({"_id": slug})):
-        logger.info("Finded in database, updating")
+        logger.info(f"Project \"{slug}\" was found in database, updating")
         db.subscribed_projects.update_one(
             {"_id": slug},
             {"$set": {
@@ -70,7 +70,7 @@ async def create_subscription(slug: int, stream: str,
         )
         return responses.SUCCESS
 
-    logger.info("Inserting in database")
+    logger.info("Inserting project into database")
     db.subscribed_projects.insert_one({
         "_id": slug,
         "stream": stream,
@@ -88,21 +88,21 @@ async def delete_subscription(slug: int, request: Request):
     try:
         if (request.headers["authorization"] !=
                 f"Bearer {os.environ['SECRET']}"):
-            logger.info("Unauthorized")
+            logger.info("Request is unauthorized")
             return responses.UNAUTHORIZED
     except KeyError:
-        logger.info("Unauthorized")
+        logger.info("Request is unauthorized")
         return responses.UNAUTHORIZED
 
     if not await cabinet.exists(slug):
-        logger.info("Doesn't exist")
+        logger.info(f"Project \"{slug}\" doesn't exist")
         return responses.PROJECT_NOT_FOUND
 
     if len(list(db.subscribed_projects.find({"_id": slug}))) == 0:
-        logger.info("Project not subscribed")
+        logger.info(f"Project \"{slug}\" is not subscribed")
         return responses.NOT_SUBSCRIBED
 
-    logger.info("Deleting")
+    logger.info("Deleting project from database")
     db.applications.delete_many({"project_id": slug})
     db.subscribed_projects.delete_one({"_id": slug})
     return responses.SUCCESS_DEL

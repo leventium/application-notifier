@@ -16,6 +16,12 @@ MSG_TEXT = """\
 """
 
 
+mongo = None
+db = None
+zulip_client = None
+cabinet = None
+
+
 async def check_new_applications():
     logger.info("New applications check process is starting")
     for project in tuple(db.subscribed_projects.find()):
@@ -40,7 +46,8 @@ async def check_new_applications():
                 if app not in previous_applications
             ]
             for app in new_applications:
-                logger.debug("Sending message")
+                logger.info(f"New application from \"{app['name']}\" "
+                            f"to vacancy \"{app['role']}\"")
                 zulip_client.send_message({
                     "type": "stream",
                     "to": project["stream"],
