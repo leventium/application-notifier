@@ -1,0 +1,34 @@
+version: "3"
+
+services:
+  server:
+    build: ./server
+    restart: always
+    environment:
+      - CABINET_URL=
+      - MONGO_CONNSTRING=mongodb://mongo
+      - SECRET=
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+  timer:
+    build: ./timer
+    restart: always
+    environment:
+      - CABINET_URL=
+      - MONGO_CONNSTRING=mongodb://mongo
+      - ZULIP_URL=
+      - BOT_EMAIL=
+      - BOT_TOKEN=
+      - COOLDOWN=
+    depends_on:
+      - mongo
+  mongo:
+    image: mongo
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
