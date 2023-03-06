@@ -6,7 +6,7 @@ services:
     restart: always
     environment:
       - CABINET_URL=
-      - MONGO_CONNSTRING=
+      - MONGO_CONNSTRING=mongodb://mongo
       - SECRET=
     ports:
       - "8000:8000"
@@ -17,10 +17,11 @@ services:
     restart: always
     environment:
       - CABINET_URL=
-      - MONGO_CONNSTRING=
+      - MONGO_CONNSTRING=mongodb://mongo
       - ZULIP_URL=
       - BOT_EMAIL=
       - BOT_TOKEN=
+      - COOLDOWN=
     depends_on:
       - mongo
   mongo:

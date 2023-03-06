@@ -2,11 +2,11 @@ import os
 import time
 import asyncio
 import pymongo
-import zulip
 from dotenv import load_dotenv
 from get_logger import get_logger
 from formatting import bring_to_mongo_format
 from cabinet_interface import CabinetInterface
+from zulip_interface import ZulipInterface
 
 
 load_dotenv()
@@ -16,10 +16,15 @@ MSG_TEXT = """\
 """
 
 
-mongo = None
-db = None
-zulip_client = None
-cabinet = None
+logger.debug("Defining interfaces")
+mongo = pymongo.MongoClient(os.environ["MONGO_CONNSTRING"])
+db = mongo.db
+zulip_client = ZulipInterface(
+    site=os.environ["ZULIP_URL"],
+    email=os.environ["BOT_EMAIL"],
+    api_key=os.environ["BOT_TOKEN"])
+cabinet = CabinetInterface(os.environ["CABINET_URL"])
+logger.debug("Interfaces defined")
 
 
 async def check_new_applications():
@@ -48,7 +53,7 @@ async def check_new_applications():
             for app in new_applications:
                 logger.info(f"New application from \"{app['name']}\" "
                             f"to vacancy \"{app['role']}\"")
-                zulip_client.send_message({
+                await zulip_client.send_message({
                     "type": "stream",
                     "to": project["stream"],
                     "topic": project["topic"],
@@ -62,20 +67,6 @@ async def check_new_applications():
 
 
 async def main():
-    global mongo
-    global db
-    global zulip_client
-    global cabinet
-    logger.debug("Defining interfaces")
-    mongo = pymongo.MongoClient(os.environ["MONGO_CONNSTRING"])
-    db = mongo.db
-    zulip_client = zulip.Client(
-        site=os.environ["ZULIP_URL"],
-        email=os.environ["BOT_EMAIL"],
-        api_key=os.environ["BOT_TOKEN"]
-    )
-    cabinet = CabinetInterface(os.environ["CABINET_URL"])
-    logger.debug("Interfaces defined")
     try:
         logger.debug("Entering cycle")
         while True:
