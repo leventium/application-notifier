@@ -1,108 +1,66 @@
-import os
+from fastapi import APIRouter, Depends
+from dotenv import load_dotenv
 import responses
 from get_logger import get_logger
-from cabinet_interface import CabinetInterface
-from formatting import bring_to_mongo_format
-from fastapi import APIRouter, Request
-from dotenv import load_dotenv
-import pymongo
+from cabinet_interface import CabinetInterface, CabinetConnectionError
+from database import Database
+from dependencies import (
+    verify_token,
+    get_database,
+    get_cabinet_client,
+    get_url_parameters,
+    get_project_id
+)
 
 
 logger = get_logger(__name__)
 logger.info("Module started")
 load_dotenv()
-router = APIRouter()
-db = None
-mongo = None
-cabinet = None
+router = APIRouter(
+    dependencies=[Depends(verify_token)]
+)
 logger.info("Global variables were defined")
 
 
-@router.on_event("startup")
-async def start():
-    global db
-    global mongo
-    global cabinet
-    logger.info("Including interfaces")
-    mongo = pymongo.MongoClient(os.environ["MONGO_CONNSTRING"])
-    db = mongo.db
-    cabinet = CabinetInterface(os.environ["CABINET_URL"])
-    logger.info("Interfaces were included")
-
-
-@router.on_event("shutdown")
-async def stop():
-    global mongo
-    global cabinet
-    logger.info("Closing dependencies")
-    mongo.close()
-    await cabinet.close()
-    logger.info("Dependencies were closed")
-
-
-@router.post("/subscription/{slug}/{stream}/{topic}")
-async def create_subscription(slug: int, stream: str,
-                              topic: str, request: Request):
-    logger.info(f"POST /subscription/{slug}/{stream}/{topic} received")
-    stream = stream.replace("_", " ")
-    topic = topic.replace("_", " ")
-    try:
-        if (request.headers["authorization"] !=
-                f"Bearer {os.environ['SECRET']}"):
-            logger.info("Request is unauthorized")
-            return responses.UNAUTHORIZED
-    except KeyError:
-        logger.info("Request is unauthorized")
-        return responses.UNAUTHORIZED
-
-    if not await cabinet.exists(slug):
-        logger.info(f"Project \"{slug}\" doesn't exist")
-        return responses.PROJECT_NOT_FOUND
-
-    if tuple(db.subscribed_projects.find({"_id": slug})):
-        logger.info(f"Project \"{slug}\" was found in database, updating")
-        db.subscribed_projects.update_one(
-            {"_id": slug},
-            {"$set": {
-                "stream": stream,
-                "topic": topic
-            }}
+@router.post("/subscription")
+async def create_subscription(
+        project_id: int = Depends(get_project_id),
+        zulip_channel_info: dict = Depends(get_url_parameters),
+        db: Database = Depends(get_database),
+        cabinet: CabinetInterface = Depends(get_cabinet_client)):
+    if db.exists(project_id):
+        logger.info(f"Project \"{project_id}\" was found in database, updating")
+        db.update_zulip_channel(
+            project_id,
+            zulip_channel_info["stream"],
+            zulip_channel_info["topic"]
         )
-        return responses.SUCCESS
+        return responses.SUCCESS_UPDATE
+
+    try:
+        cabinet_applications = await cabinet.get_all_applications(project_id)
+    except CabinetConnectionError:
+        logger.warning("Cabinet error occurred while getting applications.")
+        return responses.CABINET_ERROR
 
     logger.info("Inserting project into database")
-    db.subscribed_projects.insert_one({
-        "_id": slug,
-        "stream": stream,
-        "topic": topic
-    })
-    cabinet_applications = await cabinet.get_all_applications(slug)
-    project_applications = bring_to_mongo_format(cabinet_applications, slug)
-    db.applications.insert_many(project_applications)
+    db.insert_record(
+        project_id,
+        zulip_channel_info["stream"],
+        zulip_channel_info["topic"],
+        cabinet_applications
+    )
     return responses.SUCCESS
 
 
-@router.delete("/subscription/{slug}")
-async def delete_subscription(slug: int, request: Request):
-    logger.info(f"DELETE /subscriptions/{slug}")
-    try:
-        if (request.headers["authorization"] !=
-                f"Bearer {os.environ['SECRET']}"):
-            logger.info("Request is unauthorized")
-            return responses.UNAUTHORIZED
-    except KeyError:
-        logger.info("Request is unauthorized")
-        return responses.UNAUTHORIZED
-
-    if not await cabinet.exists(slug):
-        logger.info(f"Project \"{slug}\" doesn't exist")
-        return responses.PROJECT_NOT_FOUND
-
-    if len(list(db.subscribed_projects.find({"_id": slug}))) == 0:
-        logger.info(f"Project \"{slug}\" is not subscribed")
+@router.delete("/subscription")
+async def delete_subscription(
+        project_id: int = Depends(get_project_id),
+        db: Database = Depends(get_database)):
+    if not db.exists(project_id):
+        logger.info(f'"{project_id}" is not subscribed')
         return responses.NOT_SUBSCRIBED
 
     logger.info("Deleting project from database")
-    db.applications.delete_many({"project_id": slug})
-    db.subscribed_projects.delete_one({"_id": slug})
+    db.delete_record(project_id)
     return responses.SUCCESS_DEL

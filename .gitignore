@@ -3,3 +3,4 @@
 .idea/
 .env
 docker-compose.dev.*
+**/*.log
