@@ -1,12 +1,12 @@
 import os
 import time
 import asyncio
-import pymongo
 from dotenv import load_dotenv
 from get_logger import get_logger
 from formatting import bring_to_mongo_format
-from cabinet_interface import CabinetInterface
+from cabinet_interface import CabinetInterface, CabinetConnectionError
 from zulip_interface import ZulipInterface
+from database import Database
 
 
 load_dotenv()
@@ -16,33 +16,30 @@ MSG_TEXT = """\
 """
 
 
-logger.debug("Defining interfaces")
-mongo = pymongo.MongoClient(os.environ["MONGO_CONNSTRING"])
-db = mongo.db
-zulip_client = ZulipInterface(
-    site=os.environ["ZULIP_URL"],
-    email=os.environ["BOT_EMAIL"],
-    api_key=os.environ["BOT_TOKEN"])
-cabinet = CabinetInterface(os.environ["CABINET_URL"])
-logger.debug("Interfaces defined")
-
-
 async def check_new_applications():
     logger.info("New applications check process is starting")
-    for project in tuple(db.subscribed_projects.find()):
+    db = Database(os.environ["MONGO_CONNSTRING"])
+    zulip_client = ZulipInterface(
+        site=os.environ["ZULIP_URL"],
+        email=os.environ["BOT_EMAIL"],
+        api_key=os.environ["BOT_TOKEN"])
+    cabinet = CabinetInterface(os.environ["CABINET_URL"])
+    for project in db.get_subscribed_projects():
         logger.info(f"Checking project: {project['_id']}")
-        cabinet_applications = await cabinet.get_all_applications(
-            project["_id"]
-        )
+        try:
+            cabinet_applications = await cabinet.get_all_applications(
+                project["_id"]
+            )
+        except CabinetConnectionError:
+            logger.warning(f"Failed to check project {project['_id']}")
+            continue
         logger.debug("Applications were got")
         current_applications = bring_to_mongo_format(
             cabinet_applications,
             project["_id"]
         )
         logger.debug("Applications list were formatted")
-        previous_applications = list(
-            db.applications.find({"project_id": project["_id"]})
-        )
+        previous_applications = db.get_all_applications(project["_id"])
         logger.debug("Checking applications")
         if len(current_applications) != len(previous_applications):
             logger.info(f"New applications were found for {project['_id']}")
@@ -63,19 +60,17 @@ async def check_new_applications():
                     )
                 })
             logger.debug("Refreshing database")
-            db.applications.insert_many(new_applications)
+            db.insert_application(new_applications)
+    db.close()
+    await zulip_client.close()
+    await cabinet.close()
 
 
 async def main():
-    try:
-        logger.debug("Entering cycle")
-        while True:
-            logger.debug("Going to function")
-            await check_new_applications()
-            time.sleep(int(os.getenv("COOLDOWN", "3600")))
-    finally:
-        await cabinet.close()
-        mongo.close()
+    while True:
+        logger.debug("Going to function")
+        await check_new_applications()
+        time.sleep(int(os.getenv("COOLDOWN", "3600")))
 
 
 if __name__ == "__main__":
