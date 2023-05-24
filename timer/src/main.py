@@ -47,6 +47,8 @@ async def check_new_applications():
                 app for app in current_applications
                 if app not in previous_applications
             ]
+            if len(new_applications) == 0:
+                continue
             for app in new_applications:
                 logger.info(f"New application from \"{app['name']}\" "
                             f"to vacancy \"{app['role']}\"")
