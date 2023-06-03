@@ -2,8 +2,11 @@ from fastapi import APIRouter, Depends
 from dotenv import load_dotenv
 import responses
 from get_logger import get_logger
-from cabinet_interface import CabinetInterface, CabinetConnectionError
-from database import Database
+from src.interfaces.cabinet_interface import (
+    CabinetInterface,
+    CabinetConnectionError
+)
+from src.interfaces.database import Database
 from dependencies import (
     verify_token,
     get_database,

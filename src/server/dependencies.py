@@ -1,8 +1,11 @@
 import os
 from configparser import ConfigParser
 from fastapi import Header, HTTPException, status
-from cabinet_interface import CabinetInterface, CabinetConnectionError
-from database import Database
+from src.interfaces.cabinet_interface import (
+    CabinetInterface,
+    CabinetConnectionError
+)
+from src.interfaces.database import Database
 from get_logger import get_logger
 
 

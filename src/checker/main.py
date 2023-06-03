@@ -4,9 +4,12 @@ import asyncio
 from dotenv import load_dotenv
 from get_logger import get_logger
 from formatting import bring_to_mongo_format
-from cabinet_interface import CabinetInterface, CabinetConnectionError
-from zulip_interface import ZulipInterface
-from database import Database
+from src.interfaces.cabinet_interface import (
+    CabinetInterface,
+    CabinetConnectionError
+)
+from src.interfaces.zulip_interface import ZulipInterface
+from src.interfaces.database import Database
 
 
 load_dotenv()
