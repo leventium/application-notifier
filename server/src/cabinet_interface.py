@@ -40,7 +40,7 @@ class CabinetInterface:
         try:
             res = await self.client.get("/public-api/projects", params={
                 "searchQuery": slug,
-                "statusIds[]": 2
+                "statusIds[]": [1, 2]
             })
         except httpx.TimeoutException:
             logger.exception(
