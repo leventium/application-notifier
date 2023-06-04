@@ -1,0 +1,6 @@
+[flake8]
+application-import-names = src, tests
+import-order-style = google
+inline-quotes = "
+
+ignore = D107

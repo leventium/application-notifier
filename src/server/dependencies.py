@@ -6,10 +6,9 @@ from src.interfaces.cabinet_interface import (
     CabinetConnectionError
 )
 from src.interfaces.database import Database
-from get_logger import get_logger
+from loguru import logger
 
 
-logger = get_logger(__name__)
 config = ConfigParser()
 config.read("response_texts.conf")
 response_texts = config["response.texts"]

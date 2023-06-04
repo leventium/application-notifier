@@ -1,12 +1,8 @@
 from fastapi import APIRouter, Depends
-from dotenv import load_dotenv
-import responses
-from get_logger import get_logger
 from src.interfaces.cabinet_interface import (
     CabinetInterface,
     CabinetConnectionError
 )
-from src.interfaces.database import Database
 from dependencies import (
     verify_token,
     get_database,
@@ -14,11 +10,12 @@ from dependencies import (
     get_url_parameters,
     get_project_id
 )
+from src.interfaces.database import Database
+from loguru import logger
+import responses
 
 
-logger = get_logger(__name__)
 logger.info("Module started")
-load_dotenv()
 router = APIRouter(
     dependencies=[Depends(verify_token)]
 )
@@ -32,7 +29,8 @@ async def create_subscription(
         db: Database = Depends(get_database),
         cabinet: CabinetInterface = Depends(get_cabinet_client)):
     if db.exists(project_id):
-        logger.info(f"Project \"{project_id}\" was found in database, updating")
+        logger.info(
+            f"Project \"{project_id}\" was found in database, updating")
         db.update_zulip_channel(
             project_id,
             zulip_channel_info["stream"],

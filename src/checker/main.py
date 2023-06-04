@@ -1,9 +1,10 @@
 import os
-import time
 import asyncio
-from dotenv import load_dotenv
-from get_logger import get_logger
-from formatting import bring_to_mongo_format
+import time
+
+from loguru import logger
+
+from src.interfaces.formatting import bring_to_mongo_format
 from src.interfaces.cabinet_interface import (
     CabinetInterface,
     CabinetConnectionError
@@ -12,8 +13,6 @@ from src.interfaces.zulip_interface import ZulipInterface
 from src.interfaces.database import Database
 
 
-load_dotenv()
-logger = get_logger(__name__)
 MSG_TEXT = """\
 От **{}** была подана заявка на вакансию **{}**\
 """
@@ -71,13 +70,13 @@ async def check_new_applications():
     await cabinet.close()
 
 
-async def main():
+async def main_loop():
     while True:
         logger.debug("Going to function")
         await check_new_applications()
         time.sleep(int(os.getenv("COOLDOWN", "3600")))
 
 
-if __name__ == "__main__":
+def main():
     logger.info("Timer service started")
-    asyncio.run(main())
+    asyncio.run(main_loop())

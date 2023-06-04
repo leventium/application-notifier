@@ -47,7 +47,9 @@ class Database:
         self.mongo.db.applications.insert_many(applications)
 
     def get_all_applications(self, project_id: int):
-        return list(self.mongo.db.applications.find({"project_id": project_id}))
+        return list(
+            self.mongo.db.applications.find({"project_id": project_id})
+        )
 
     def get_subscribed_projects(self) -> list:
         return list(self.mongo.db.subscribed_projects.find())
