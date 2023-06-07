@@ -20,13 +20,19 @@ MSG_TEXT = """\
 
 async def check_new_applications():
     logger.info("New applications check process is starting")
-    db = Database(os.environ["MONGO_CONNSTRING"])
+    db = await Database.connect(
+        os.environ["PG_HOST"],
+        int(os.environ["PG_PORT"]),
+        os.environ["PG_USER"],
+        os.environ["PG_PASSWORD"],
+        os.environ["PG_DATABASE"]
+    )
     zulip_client = ZulipInterface(
         site=os.environ["ZULIP_URL"],
         email=os.environ["BOT_EMAIL"],
         api_key=os.environ["BOT_TOKEN"])
     cabinet = CabinetInterface(os.environ["CABINET_URL"])
-    for project in db.get_subscribed_projects():
+    for project in (await db.get_subscribed_projects()):
         logger.info(f"Checking project: {project['_id']}")
         try:
             cabinet_applications = await cabinet.get_all_applications(
@@ -41,7 +47,7 @@ async def check_new_applications():
             project["_id"]
         )
         logger.debug("Applications list were formatted")
-        previous_applications = db.get_all_applications(project["_id"])
+        previous_applications = await db.get_all_applications(project["_id"])
         logger.debug("Checking applications")
         if len(current_applications) != len(previous_applications):
             logger.info(f"New applications were found for {project['_id']}")
@@ -64,8 +70,8 @@ async def check_new_applications():
                     )
                 })
             logger.debug("Refreshing database")
-            db.insert_application(new_applications)
-    db.close()
+            await db.insert_application(new_applications)
+    await db.close()
     await zulip_client.close()
     await cabinet.close()
 

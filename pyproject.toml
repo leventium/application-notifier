@@ -9,13 +9,11 @@ packages = [{include = "application_notifier"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 httpx = "^0.23.1"
-pymongo = "^4.3.3"
 python-dotenv = "^0.21.0"
 loguru = "^0.7.0"
-
-[tool.poetry.group.server.dependencies]
 fastapi = "^0.87.0"
 uvicorn = "^0.20.0"
+asyncpg = "^0.27.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
