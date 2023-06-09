@@ -31,11 +31,17 @@ async def verify_token(authorization: str = Header(default=None)):
 
 
 async def get_database():
-    db = Database(os.environ["MONGO_CONNSTRING"])
+    db = await Database.connect(
+        os.environ["PG_HOST"],
+        int(os.environ["PG_PORT"]),
+        os.environ["PG_USER"],
+        os.environ["PG_PASSWORD"],
+        os.environ["PG_DATABASE"]
+    )
     try:
         yield db
     finally:
-        db.close()
+        await db.close()
 
 
 async def get_cabinet_client():
