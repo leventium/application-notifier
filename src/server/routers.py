@@ -28,10 +28,10 @@ async def create_subscription(
         zulip_channel_info: dict = Depends(get_url_parameters),
         db: Database = Depends(get_database),
         cabinet: CabinetInterface = Depends(get_cabinet_client)):
-    if db.exists(project_id):
+    if await db.exists(project_id):
         logger.info(
             f"Project \"{project_id}\" was found in database, updating")
-        db.update_zulip_channel(
+        await db.update_zulip_channel(
             project_id,
             zulip_channel_info["stream"],
             zulip_channel_info["topic"]
@@ -45,7 +45,7 @@ async def create_subscription(
         return responses.CABINET_ERROR
 
     logger.info("Inserting project into database")
-    db.insert_record(
+    await db.insert_record(
         project_id,
         zulip_channel_info["stream"],
         zulip_channel_info["topic"],
@@ -58,10 +58,10 @@ async def create_subscription(
 async def delete_subscription(
         project_id: int = Depends(get_project_id),
         db: Database = Depends(get_database)):
-    if not db.exists(project_id):
+    if not await db.exists(project_id):
         logger.info(f'"{project_id}" is not subscribed')
         return responses.NOT_SUBSCRIBED
 
     logger.info("Deleting project from database")
-    db.delete_record(project_id)
+    await db.delete_record(project_id)
     return responses.SUCCESS_DEL

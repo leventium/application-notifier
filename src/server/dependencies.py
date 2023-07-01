@@ -52,14 +52,14 @@ async def get_cabinet_client():
         await client.close()
 
 
-async def get_url_parameters(stream: str, topic: str):
+async def get_url_parameters(stream: str, topic: str) -> dict[str, str]:
     return {
         "stream": stream.replace("_", " "),
         "topic": topic.replace("_", " ")
     }
 
 
-async def get_project_id(slug: int):
+async def get_project_id(slug: int) -> int:
     cabinet = CabinetInterface(os.environ["CABINET_URL"])
     try:
         project_id = await cabinet.get_project_id_from_slug(slug)
