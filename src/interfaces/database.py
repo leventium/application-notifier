@@ -6,8 +6,8 @@ class Database:
         await self.conn.execute("""
             CREATE TABLE IF NOT EXISTS projects (
                 id          INT PRIMARY KEY,
-                stream      VARCHAR(120),
-                topic       VARCHAR(120)
+                stream      VARCHAR(150),
+                topic       VARCHAR(150)
             );
             
             CREATE TABLE IF NOT EXISTS applications (
@@ -43,40 +43,67 @@ class Database:
     async def close(self) -> None:
         await self.conn.close()
 
-    # ---------------------------------------------------------------------
+    async def get_subscribed_projects(self) -> list:
+        res = await self.conn.fetch("""
+            SELECT id, stream, topic
+            FROM projects;
+        """)
+        return [dict(elem) for elem in res]
 
-    async def insert_record(
+    async def get_project_applications(self, project_id: int):
+        res = await self.conn.fetch("""
+            SELECT id, name, role, project_id
+            FROM applications
+            WHERE project_id = $1;
+        """, project_id)
+        return [dict(elem) for elem in res]
+
+    async def insert_project(
             self,
             project_id: int,
             stream: str,
-            topic: str,
-            applications: list[dict]) -> None:
-        async with self.conn.transaction():
-            try:
-                await self.conn.execute("""
-                    INSERT INTO projects (id, stream, topic)
-                        VALUES ($1, $2, $3);
-                """, project_id, stream, topic)
-            except asyncpg.UniqueViolationError:
-                raise ProjectAlreadyExistsError(project_id)
-            for app in applications:
-                try:
-                    await self.conn.execute(
-                        """
-                        INSERT INTO applications (id, name, role, project_id)
-                            VALUES ($1, $2, $3, $4);
-                        """,
-                        app["id"],
-                        app["name"],
-                        app["role"],
-                        app["project_id"]
-                    )
-                except KeyError as err:
-                    raise InvalidApplication(err.args[0])
-                except asyncpg.UniqueViolationError:
-                    raise ProjectAlreadyExistsError(app["id"])
+            topic: str) -> None:
+        try:
+            await self.conn.execute("""
+                INSERT INTO projects (id, stream, topic)
+                    VALUES ($1, $2, $3);
+            """, project_id, stream, topic)
+        except asyncpg.UniqueViolationError:
+            raise ProjectAlreadyExistsError()
 
-    async def update_zulip_channel(
+    async def insert_application(
+            self,
+            app_id: int,
+            project_id: int,
+            user_name: str,
+            role: str):
+        try:
+            await self.conn.execute(
+                """
+                INSERT INTO applications (id, name, role, project_id)
+                    VALUES ($1, $2, $3, $4);
+                """, app_id, user_name, role, project_id)
+        except KeyError as err:
+            raise InvalidApplication(err.args[0])
+        except asyncpg.UniqueViolationError:
+            raise ApplicationAlreadyExistsError()
+
+    async def project_exists(self, project_id: int) -> bool:
+        return bool(await self.conn.fetchval("""
+            SELECT COUNT(*)
+            FROM projects
+            WHERE id = $1
+            LIMIT 1;
+        """, project_id))
+
+    async def delete_project(self, project_id: int) -> None:
+        await self.conn.execute("""
+            DELETE
+            FROM projects
+            WHERE id = $1;
+        """, project_id)
+
+    async def update_zulip_stream(
             self,
             project_id: int,
             stream: str,
@@ -86,55 +113,6 @@ class Database:
             SET stream = $2, topic = $3
             WHERE id = $1;
         """, project_id, stream, topic)
-
-    async def exists(self, project_id: int) -> bool:
-        return bool(await self.conn.fetchval("""
-            SELECT COUNT(*)
-            FROM projects
-            WHERE id = $1
-            LIMIT 1;
-        """, project_id))
-
-    async def delete_record(self, project_id: int) -> None:
-        await self.conn.execute("""
-            DELETE
-            FROM projects
-            WHERE id = $1;
-        """, project_id)
-
-    async def insert_application(self, applications: list):
-        async with self.conn.transaction():
-            for app in applications:
-                try:
-                    await self.conn.execute(
-                        """
-                        INSERT INTO applications (id, name, role, project_id)
-                            VALUES ($1, $2, $3, $4);
-                        """,
-                        app["id"],
-                        app["name"],
-                        app["role"],
-                        app["project_id"]
-                    )
-                except KeyError as err:
-                    raise InvalidApplication(err.args[0])
-                except asyncpg.UniqueViolationError:
-                    raise ApplicationAlreadyExistsError(app["id"])
-
-    async def get_all_applications(self, project_id: int):
-        res = await self.conn.fetch("""
-            SELECT id, name, role, project_id
-            FROM applications
-            WHERE project_id = $1;
-        """, project_id)
-        return [dict(elem) for elem in res]
-
-    async def get_subscribed_projects(self) -> list:
-        res = await self.conn.fetch("""
-            SELECT id, stream, topic
-            FROM projects;
-        """)
-        return [dict(elem) for elem in res]
 
 
 class ProjectAlreadyExistsError(Exception):

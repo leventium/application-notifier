@@ -11,7 +11,6 @@ class Application:
     def __init__(
             self,
             app_id: int,
-            user_id: int,
             project_id: int,
             user_name: str,
             role: str):
@@ -19,7 +18,6 @@ class Application:
         Creates the instance of applications class.
         """
         self.id = app_id
-        self.user_id = user_id
         self.project_id = project_id
         self.user_name = user_name
         self.role = role
@@ -28,4 +26,9 @@ class Application:
         """
         Inserts this applications in the database.
         """
-        pass
+        await db.insert_application(
+            self.id,
+            self.project_id,
+            self.user_name,
+            self.role
+        )
