@@ -19,7 +19,6 @@ logger.info("Module started")
 router = APIRouter(
     dependencies=[Depends(verify_token)]
 )
-logger.info("Global variables were defined")
 
 
 @router.post("/subscription")

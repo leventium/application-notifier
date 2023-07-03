@@ -48,7 +48,7 @@ class Project:
             ))
         return res
 
-    async def update_zulip_info(
+    async def update_zulip_info(  # TODO get params from obj
             self, db: Database, new_stream: str, new_topic: str):
         """
         Update zulip info for this project.

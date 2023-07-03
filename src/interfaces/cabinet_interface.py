@@ -1,35 +1,37 @@
 import httpx
 from loguru import logger
+from src.models.project import Project
+from src.models.application import Application
 
 
 class CabinetInterface:
     def __init__(self, base_url: str):
         self.client = httpx.AsyncClient(base_url=base_url)
 
-    async def get_all_applications(self, project_id: int) -> list[dict]:
-        logger.debug(f"Getting applications for {project_id}.")
+    async def get_project_applications(
+            self, project: Project) -> list[Application]:
+        logger.debug(f"Getting applications for project - {project.id}.")
         try:
             res = await self.client.get(
-                f"/public-api/students/project/application/{project_id}"
+                f"/public-api/students/project/application/{project.id}"
             )
         except httpx.TimeoutException:
             logger.exception(
                 "Error occurred while getting new "
-                f"applications for {project_id} from cabinet."
+                f"applications for {project.id} from cabinet."
             )
             raise CabinetConnectionError(
                 "Timeout limit exited while requesting cabinet."
             )
-        logger.debug(f"Applications for {project_id} were successfully got.")
+        logger.debug(f"Applications for {project.id} were successfully got.")
         applications = []
-        for elem in res.json()["data"]:
-            new_app = {
-                "id": elem["id"],
-                "userId": elem["userId"],
-                "name": elem["name"],
-                "role": elem["role"]
-            }
-            applications.append(new_app)
+        for app in res.json()["data"]:
+            applications.append(Application(
+                app["id"],
+                project.id,
+                app["name"],
+                app["role"]
+            ))
         return applications
 
     async def get_project_id_from_slug(self, slug: int) -> int | None:
