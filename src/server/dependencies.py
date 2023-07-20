@@ -1,12 +1,14 @@
 import os
 from configparser import ConfigParser
 from fastapi import Header, HTTPException, status
+from loguru import logger
+from src.models.project import Project
+from src.postgres.project_repository import PostgresProjectRepository
+from src.postgres.application_repository import PostgresApplicationRepository
 from src.interfaces.cabinet_interface import (
     CabinetInterface,
     CabinetConnectionError
 )
-from src.interfaces.database import Database
-from loguru import logger
 
 
 config = ConfigParser()
@@ -30,37 +32,8 @@ async def verify_token(authorization: str = Header(default=None)):
         )
 
 
-async def get_database():
-    db = await Database.connect(
-        os.environ["PG_HOST"],
-        int(os.environ["PG_PORT"]),
-        os.environ["PG_USER"],
-        os.environ["PG_PASSWORD"],
-        os.environ["PG_DATABASE"]
-    )
-    try:
-        yield db
-    finally:
-        await db.close()
-
-
-async def get_cabinet_client():
-    client = CabinetInterface(os.environ["CABINET_URL"])
-    try:
-        yield client
-    finally:
-        await client.close()
-
-
-async def get_url_parameters(stream: str, topic: str) -> dict[str, str]:
-    return {
-        "stream": stream.replace("_", " "),
-        "topic": topic.replace("_", " ")
-    }
-
-
 async def get_project_id(slug: int) -> int:
-    cabinet = CabinetInterface(os.environ["CABINET_URL"])
+    cabinet = CabinetInterface()
     try:
         project_id = await cabinet.get_project_id_from_slug(slug)
     except CabinetConnectionError:
@@ -78,3 +51,16 @@ async def get_project_id(slug: int) -> int:
             detail=response_texts["ProjectNotFound"]
         )
     return project_id
+
+
+async def get_project(slug: int, stream: str, topic: str) -> Project:
+    project_id = await get_project_id(slug)
+    return Project(project_id, stream, topic)
+
+
+async def get_project_repo():
+    return PostgresProjectRepository()
+
+
+async def get_application_repo():
+    return PostgresApplicationRepository()
