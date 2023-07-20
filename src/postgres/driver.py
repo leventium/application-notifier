@@ -1,30 +1,34 @@
 import asyncpg
 
 
+class PostgresCredentials:
+    def __init__(self, host: str, port: int, user: str, password: str, db: str):
+        self.host = host
+        self.port = port
+        self.user = user
+        self.password = password
+        self.db = db
+
+
 class PostgresDriver(object):
     _instance = None
+    _pool = None
 
     def __new__(cls):
         return None
 
     @classmethod
-    async def get_instance(
-            cls,
-            host: str,
-            port: int,
-            user: str,
-            password: str,
-            db: str):
+    async def get_instance(cls, credentials: PostgresCredentials):
         if cls._instance is None:
             cls._instance = object.__new__(cls)
-            cls._instance.pool = asyncpg.create_pool(
-                host=host,
-                port=port,
-                user=user,
-                password=password,
-                database=db
+            cls._instance._pool = asyncpg.create_pool(
+                host=credentials.host,
+                port=credentials.port,
+                user=credentials.user,
+                password=credentials.password,
+                database=credentials.db
             )
-            async with cls._instance.pool.acquire() as conn:
+            async with cls._instance._pool.acquire() as conn:
                 await conn.execute("""
                     CREATE TABLE IF NOT EXISTS projects (
                         id          INT PRIMARY KEY,
@@ -43,7 +47,7 @@ class PostgresDriver(object):
         return cls._instance
 
     async def get_connection(self):
-        return await self._instance.pool.acquire()
+        return await self._instance._pool.acquire()
 
-    async def release_conection(self, conn):
-        await self._instance.pool.release(conn)
+    async def release_connection(self, conn):
+        await self._instance._pool.release(conn)
