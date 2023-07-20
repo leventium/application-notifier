@@ -1,3 +1,4 @@
+import os
 import httpx
 from loguru import logger
 from src.models.project import Project
@@ -5,8 +6,8 @@ from src.models.application import Application
 
 
 class CabinetInterface:
-    def __init__(self, base_url: str):
-        self.client = httpx.AsyncClient(base_url=base_url)
+    def __init__(self):
+        self.client = httpx.AsyncClient(base_url=os.environ["CABINET_URL"])
 
     async def get_project_applications(
             self, project: Project) -> list[Application]:
@@ -15,13 +16,14 @@ class CabinetInterface:
             res = await self.client.get(
                 f"/public-api/students/project/application/{project.id}"
             )
-        except httpx.TimeoutException:
+            res.raise_for_status()
+        except httpx.HTTPError:
             logger.exception(
                 "Error occurred while getting new "
                 f"applications for {project.id} from cabinet."
             )
             raise CabinetConnectionError(
-                "Timeout limit exited while requesting cabinet."
+                "Error occurred while requesting cabinet."
             )
         logger.debug(f"Applications for {project.id} were successfully got.")
         applications = []
@@ -39,15 +41,16 @@ class CabinetInterface:
         try:
             res = await self.client.get("/public-api/projects", params={
                 "searchQuery": slug,
-                "statusIds[]": 2
+                "statusIds[]": [1, 2]
             })
-        except httpx.TimeoutException:
+            res.raise_for_status()
+        except httpx.HTTPError:
             logger.exception(
                 "Error occurred while getting project "
                 f"id for {slug} from cabinet."
             )
             raise CabinetConnectionError(
-                "Timeout limit exited while requesting cabinet."
+                "Error occurred while requesting cabinet."
             )
         try:
             for project in res.json()["data"]["projects"]:
@@ -56,10 +59,10 @@ class CabinetInterface:
                     return project["id"]
         except TypeError:
             logger.warning("Invalid JSON structure.")
-            logger.debug(res.json())
+            logger.warning(res.json())
         except KeyError:
             logger.warning("Invalid JSON structure.")
-            logger.debug(res.json())
+            logger.warning(res.json())
         return None
 
     async def close(self) -> None:

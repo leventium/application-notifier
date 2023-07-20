@@ -1,6 +1,7 @@
 """
 Module with Zulip interface.
 """
+import os
 import httpx
 
 
@@ -8,8 +9,14 @@ class ZulipInterface:
     """
     Class that provides abstraction under zulip API.
     """
-    def __init__(self, email: str, api_key: str, site: str) -> None:
-        self.client = httpx.AsyncClient(base_url=site, auth=(email, api_key))
+    def __init__(self) -> None:
+        self.client = httpx.AsyncClient(
+            base_url=os.environ["ZULIP_URL"],
+            auth=(
+                os.environ["BOT_EMAIL"],
+                os.environ["BOT_TOKEN"]
+            )
+        )
 
     async def close(self) -> None:
         await self.client.aclose()

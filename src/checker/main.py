@@ -27,11 +27,8 @@ async def check_new_applications():
         os.environ["PG_PASSWORD"],
         os.environ["PG_DATABASE"]
     )
-    zulip_client = ZulipInterface(
-        site=os.environ["ZULIP_URL"],
-        email=os.environ["BOT_EMAIL"],
-        api_key=os.environ["BOT_TOKEN"])
-    cabinet = CabinetInterface(os.environ["CABINET_URL"])
+    zulip_client = ZulipInterface()
+    cabinet = CabinetInterface()
     for project in (await db.get_subscribed_projects()):
         logger.info(f"Checking project: {project['_id']}")
         try:

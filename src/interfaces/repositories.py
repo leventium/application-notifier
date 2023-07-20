@@ -12,7 +12,10 @@ class IProjectRepository:
     async def get_by_id(self, project_id: int) -> Project | None:
         pass
 
-    async def delete(self, project: Project) -> None:
+    async def get_all(self) -> list[Project]:
+        pass
+
+    async def delete(self, project_id: int) -> None:
         pass
 
 
