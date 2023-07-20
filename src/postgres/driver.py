@@ -1,13 +1,5 @@
+import os
 import asyncpg
-
-
-class PostgresCredentials:
-    def __init__(self, host: str, port: int, user: str, password: str, db: str):
-        self.host = host
-        self.port = port
-        self.user = user
-        self.password = password
-        self.db = db
 
 
 class PostgresDriver(object):
@@ -18,15 +10,15 @@ class PostgresDriver(object):
         return None
 
     @classmethod
-    async def get_instance(cls, credentials: PostgresCredentials):
+    async def get_instance(cls):
         if cls._instance is None:
             cls._instance = object.__new__(cls)
             cls._instance._pool = asyncpg.create_pool(
-                host=credentials.host,
-                port=credentials.port,
-                user=credentials.user,
-                password=credentials.password,
-                database=credentials.db
+                host=os.environ["PG_HOST"],
+                port=int(os.environ["PG_PORT"]),
+                user=os.environ["PG_USER"],
+                password=os.environ["PG_PASSWORD"],
+                database=os.environ["PG_DATABASE"]
             )
             async with cls._instance._pool.acquire() as conn:
                 await conn.execute("""

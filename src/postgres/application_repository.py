@@ -4,9 +4,6 @@ from src.models.application import Application
 
 
 class PostgresApplicationRepository(PostgresQueries, IApplicationRepository):
-    def __init__(self, host, port, user, password, db):
-        super().__init__(host, port, user, password, db)
-
     async def save(self, app: Application) -> None:
         await self._execute("""
             insert into applications (id, name, role, project_id) values

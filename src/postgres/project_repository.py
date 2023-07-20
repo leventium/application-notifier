@@ -4,9 +4,6 @@ from src.models.project import Project
 
 
 class PostgresProjectRepository(PostgresQueries, IProjectRepository):
-    def __init__(self, host, port, user, password, db):
-        super().__init__(host, port, user, password, db)
-
     async def save(self, project: Project) -> None:
         await self._execute("""
             insert into projects (id, stream, topic) values
@@ -26,9 +23,20 @@ class PostgresProjectRepository(PostgresQueries, IProjectRepository):
             return None
         return Project(res["id"], res["stream"], res["topic"])
 
-    async def delete(self, project: Project) -> None:
+    async def get_all(self) -> list[Project]:
+        res = await self._fetch("""
+            select id, stream, topic
+            from projects;
+        """)
+        return [Project(
+            elem["id"],
+            elem["stream"],
+            elem["topic"]
+        ) for elem in res]
+
+    async def delete(self, project_id: int) -> None:
         await self._execute("""
             delete
             from projects
             where id = $1
-        """, project.id)
+        """, project_id)
