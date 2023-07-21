@@ -1,16 +1,15 @@
 import os
 import asyncio
 import time
-
 from loguru import logger
-
-from src.interfaces.formatting import bring_to_mongo_format
 from src.interfaces.cabinet_interface import (
     CabinetInterface,
     CabinetConnectionError
 )
 from src.interfaces.zulip_interface import ZulipInterface
-from src.interfaces.database import Database
+from src.service.application_service import ApplicationService
+from src.postgres.application_repository import PostgresApplicationRepository
+from src.postgres.project_repository import PostgresProjectRepository
 
 
 MSG_TEXT = """\
@@ -19,67 +18,48 @@ MSG_TEXT = """\
 
 
 async def check_new_applications():
-    logger.info("New applications check process is starting")
-    db = await Database.connect(
-        os.environ["PG_HOST"],
-        int(os.environ["PG_PORT"]),
-        os.environ["PG_USER"],
-        os.environ["PG_PASSWORD"],
-        os.environ["PG_DATABASE"]
-    )
-    zulip_client = ZulipInterface()
+    logger.info("Checking for new applications")
+    zulip = ZulipInterface()
     cabinet = CabinetInterface()
-    for project in (await db.get_subscribed_projects()):
-        logger.info(f"Checking project: {project['_id']}")
+    project_repo = PostgresProjectRepository()
+    app_repo = PostgresApplicationRepository()
+
+    current_projects = await project_repo.get_all()
+    for project in current_projects:
+        logger.info(f"Checking project {project.id}")
         try:
-            cabinet_applications = await cabinet.get_all_applications(
-                project["_id"]
-            )
+            new_apps = await cabinet.get_project_applications(project)
         except CabinetConnectionError:
-            logger.warning(f"Failed to check project {project['_id']}")
+            logger.warning("Cabinet error occurred while fetching apps "
+                           f"for project '{project.id}'... skipping")
             continue
-        logger.debug("Applications were got")
-        current_applications = bring_to_mongo_format(
-            cabinet_applications,
-            project["_id"]
-        )
-        logger.debug("Applications list were formatted")
-        previous_applications = await db.get_all_applications(project["_id"])
-        logger.debug("Checking applications")
-        if len(current_applications) != len(previous_applications):
-            logger.info(f"New applications were found for {project['_id']}")
-            new_applications = [
-                app for app in current_applications
-                if app not in previous_applications
-            ]
-            if len(new_applications) == 0:
-                continue
-            for app in new_applications:
-                logger.info(f"New application from \"{app['name']}\" "
-                            f"to vacancy \"{app['role']}\"")
-                await zulip_client.send_message({
-                    "type": "stream",
-                    "to": project["stream"],
-                    "topic": project["topic"],
-                    "content": MSG_TEXT.format(
-                        app["name"],
-                        app["role"].replace("/ ", " ")
-                    )
-                })
-            logger.debug("Refreshing database")
-            await db.insert_application(new_applications)
-    await db.close()
-    await zulip_client.close()
+        curr_apps = await app_repo.get_by_project_id(project.id)
+        unique_apps = ApplicationService.find_new_applications(new_apps,
+                                                               curr_apps)
+        for app in unique_apps:
+            logger.info(f"New app for project '{project.id}' "
+                        f"- {app.user_name} | {app.role}")
+            await zulip.send_message({
+                "type": "stream",
+                "to": project.zulip_stream,
+                "topic": project.zulip_topic,
+                "content": MSG_TEXT.format(
+                    app.user_name,
+                    app.role.replace("/ ", " ")
+                )
+            })
+            await app_repo.save(app)
+
+    await zulip.close()
     await cabinet.close()
 
 
 async def main_loop():
     while True:
-        logger.debug("Going to function")
         await check_new_applications()
-        time.sleep(int(os.getenv("COOLDOWN", "3600")))
+        time.sleep(3600 * int(os.getenv("COOLDOWN", "1")))
 
 
 def main():
-    logger.info("Timer service started")
+    logger.info("Checker service started")
     asyncio.run(main_loop())
