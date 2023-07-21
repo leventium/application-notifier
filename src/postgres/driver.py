@@ -39,7 +39,7 @@ class PostgresDriver(object):
         return cls._instance
 
     async def get_connection(self):
-        return await self._instance._pool.acquire()
+        return await self._pool.acquire()
 
     async def release_connection(self, conn):
-        await self._instance._pool.release(conn)
+        await self._pool.release(conn)
