@@ -2,12 +2,30 @@ import os
 import asyncpg
 
 
-class PostgresDriver(object):
+class PostgresDatabase(object):
     _instance = None
     _pool = None
 
     def __new__(cls):
         return None
+
+    async def _init(self):
+        async with self._pool.acquire() as conn:
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS projects (
+                    id          INT PRIMARY KEY,
+                    stream      VARCHAR(150),
+                    topic       VARCHAR(150)
+                );
+
+                CREATE TABLE IF NOT EXISTS applications (
+                    id          INT PRIMARY KEY,
+                    name        VARCHAR(120),
+                    role        VARCHAR(120),
+                    project_id  INT REFERENCES projects(id)
+                                ON DELETE CASCADE
+                );
+            """)
 
     @classmethod
     async def get_instance(cls):
@@ -20,22 +38,7 @@ class PostgresDriver(object):
                 password=os.environ["PG_PASSWORD"],
                 database=os.environ["PG_DATABASE"]
             )
-            async with cls._instance._pool.acquire() as conn:
-                await conn.execute("""
-                    CREATE TABLE IF NOT EXISTS projects (
-                        id          INT PRIMARY KEY,
-                        stream      VARCHAR(150),
-                        topic       VARCHAR(150)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS applications (
-                        id          INT PRIMARY KEY,
-                        name        VARCHAR(120),
-                        role        VARCHAR(120),
-                        project_id  INT REFERENCES projects(id)
-                                    ON DELETE CASCADE
-                    );
-                """)
+            await cls._instance._init()
         return cls._instance
 
     async def get_connection(self):
@@ -43,3 +46,6 @@ class PostgresDriver(object):
 
     async def release_connection(self, conn):
         await self._pool.release(conn)
+
+    async def close(self):
+        await self._pool.close()
