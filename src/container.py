@@ -8,6 +8,7 @@ from src.postgres.application_repository import PostgresApplicationRepository
 from src.clients.cabinet_client import CabinetClient
 from src.clients.zulip_client import ZulipClient
 from src.checker.checker import Checker
+from src.controllers import Controller
 
 
 class Container:
@@ -35,8 +36,14 @@ class Container:
             )
         if classname == Checker:
             return Checker(
-                cls.get(ZulipClient),
-                cls.get(CabinetClient),
-                cls.get(PostgresProjectRepository),
-                cls.get(PostgresApplicationRepository)
+                zulip=cls.get(ZulipClient),
+                cabinet=cls.get(CabinetClient),
+                project_repo=cls.get(PostgresProjectRepository),
+                app_repo=cls.get(PostgresApplicationRepository)
+            )
+        if classname == Controller:
+            return Controller(
+                cabinet=cls.get(CabinetClient),
+                project_repo=cls.get(PostgresProjectRepository),
+                app_repo=cls.get(PostgresApplicationRepository)
             )

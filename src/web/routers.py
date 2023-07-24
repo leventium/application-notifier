@@ -1,22 +1,12 @@
 from fastapi import APIRouter, Depends
-from loguru import logger
-from src.clients.cabinet_client import (
-    CabinetClient,
-    CabinetConnectionError
+from src.container import Container
+from src.controllers import (
+    Controller,
+    CabinetError,
+    ProjectNotFound,
+    ProjectFoundAndUpdated
 )
-from src.models import Project
-from dependencies import (
-    verify_token,
-    get_project_id,
-    get_project,
-    get_project_repo,
-    get_application_repo,
-    get_cabinet_client
-)
-from src.repositories import (
-    IApplicationRepository,
-    IProjectRepository
-)
+from dependencies import verify_token
 import responses
 
 
@@ -26,41 +16,24 @@ router = APIRouter(
 
 
 @router.post("/subscription")
-async def create_subscription(
-        received_project: Project = Depends(get_project),
-        cabinet: CabinetClient = Depends(get_cabinet_client),
-        project_repo: IProjectRepository = Depends(get_project_repo),
-        app_repo: IApplicationRepository = Depends(get_application_repo)
-):
-    if await project_repo.get_by_id(received_project.id) is not None:
-        logger.info(f"Project '{received_project.id}' was found in database, "
-                    "updating")
-        await project_repo.save(received_project)
-        return responses.SUCCESS_UPDATE
-
+async def create_subscription(slug: int, zulip_stream: str, zulip_topic: str):
+    controller = Container.get(Controller)
     try:
-        project_applications = await cabinet.get_project_applications(
-            received_project
-        )
-    except CabinetConnectionError:
+        controller.create_subscription(slug, zulip_stream, zulip_topic)
+    except CabinetError:
         return responses.CABINET_ERROR
-
-    logger.info("Inserting project into database")
-    await project_repo.save(received_project)
-    for app in project_applications:
-        await app_repo.save(app)
+    except ProjectNotFound:
+        return responses.PROJECT_NOT_FOUND
+    except ProjectFoundAndUpdated:
+        return responses.SUCCESS_UPDATE
     return responses.SUCCESS
 
 
 @router.delete("/subscription")
-async def delete_subscription(
-        project_id: int = Depends(get_project_id),
-        project_repo: IProjectRepository = Depends(get_project_repo)
-):
-    if await project_repo.get_by_id(project_id) is None:
-        logger.info(f'"{project_id}" is not subscribed')
+async def delete_subscription(slug: int):
+    controller = Container.get(Controller)
+    try:
+        controller.delete_subscription(slug)
+    except ProjectNotFound:
         return responses.NOT_SUBSCRIBED
-
-    logger.info("Deleting project from database")
-    await project_repo.delete(project_id)
     return responses.SUCCESS_DEL
