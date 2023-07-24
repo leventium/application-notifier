@@ -1,11 +1,10 @@
 """
 Module with Zulip interface.
 """
-import os
 import httpx
 
 
-class ZulipInterface:
+class ZulipClient:
     """
     Class that provides abstraction under zulip API.
     """

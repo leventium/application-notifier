@@ -6,8 +6,8 @@ from src.models import Project
 from src.postgres.project_repository import PostgresProjectRepository
 from src.postgres.application_repository import PostgresApplicationRepository
 from src.container import Container
-from src.interfaces.cabinet_interface import (
-    CabinetInterface,
+from src.clients.cabinet_client import (
+    CabinetClient,
     CabinetConnectionError
 )
 
@@ -34,7 +34,7 @@ async def verify_token(authorization: str = Header(default=None)):
 
 
 async def get_project_id(slug: int) -> int:
-    cabinet = CabinetInterface()
+    cabinet = Container.get(CabinetClient)
     try:
         project_id = await cabinet.get_project_id_from_slug(slug)
     except CabinetConnectionError:
@@ -43,8 +43,6 @@ async def get_project_id(slug: int) -> int:
             status_code=status.HTTP_504_GATEWAY_TIMEOUT,
             detail=response_texts["CabinetError"]
         )
-    finally:
-        await cabinet.close()
     if project_id is None:
         logger.info(f"Project with slug {slug} doesn't exist.")
         raise HTTPException(
@@ -65,3 +63,7 @@ async def get_project_repo():
 
 async def get_application_repo():
     return Container.get(PostgresApplicationRepository)
+
+
+async def get_cabinet_client():
+    return Container.get(CabinetClient)

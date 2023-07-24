@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from loguru import logger
-from src.interfaces.cabinet_interface import (
-    CabinetInterface,
+from src.clients.cabinet_client import (
+    CabinetClient,
     CabinetConnectionError
 )
 from src.models import Project
@@ -10,9 +10,10 @@ from dependencies import (
     get_project_id,
     get_project,
     get_project_repo,
-    get_application_repo
+    get_application_repo,
+    get_cabinet_client
 )
-from src.interfaces.repositories import (
+from src.repositories import (
     IApplicationRepository,
     IProjectRepository
 )
@@ -27,6 +28,7 @@ router = APIRouter(
 @router.post("/subscription")
 async def create_subscription(
         received_project: Project = Depends(get_project),
+        cabinet: CabinetClient = Depends(get_cabinet_client),
         project_repo: IProjectRepository = Depends(get_project_repo),
         app_repo: IApplicationRepository = Depends(get_application_repo)
 ):
@@ -37,7 +39,6 @@ async def create_subscription(
         return responses.SUCCESS_UPDATE
 
     try:
-        cabinet = CabinetInterface()
         project_applications = await cabinet.get_project_applications(
             received_project
         )

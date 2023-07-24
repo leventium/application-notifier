@@ -4,7 +4,7 @@ from fastapi import FastAPI
 import uvicorn
 import preimports
 from container import Container
-from server.routers import router
+from web.routers import router
 from checker.checker import Checker
 from checker.main import main
 

@@ -1,10 +1,9 @@
-import os
 import httpx
 from loguru import logger
 from src.models import Project, Application
 
 
-class CabinetInterface:
+class CabinetClient:
     def __init__(self, base_url):
         self.client = httpx.AsyncClient(base_url=base_url)
 

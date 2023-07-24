@@ -1,11 +1,11 @@
 from loguru import logger
 from src.service.application_service import ApplicationService
-from src.interfaces.zulip_interface import ZulipInterface
-from src.interfaces.cabinet_interface import (
-    CabinetInterface,
+from src.clients.zulip_client import ZulipClient
+from src.clients.cabinet_client import (
+    CabinetClient,
     CabinetConnectionError
 )
-from src.interfaces.repositories import (
+from src.repositories import (
     IApplicationRepository,
     IProjectRepository
 )
@@ -19,8 +19,8 @@ MSG_TEXT = """\
 class Checker:
     def __init__(
             self,
-            zulip: ZulipInterface,
-            cabinet: CabinetInterface,
+            zulip: ZulipClient,
+            cabinet: CabinetClient,
             project_repo: IProjectRepository,
             app_repo: IApplicationRepository
     ):

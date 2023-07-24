@@ -1,5 +1,5 @@
 from asyncpg import pool
-from src.interfaces.repositories import IApplicationRepository
+from src.repositories import IApplicationRepository
 from src.models import Application
 
 
