@@ -1,4 +1,4 @@
-from src.models.application import Application
+from src.models import Application
 
 
 class ApplicationService:

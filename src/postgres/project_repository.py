@@ -1,11 +1,14 @@
+from asyncpg import pool
 from src.interfaces.repositories import IProjectRepository
-from postgres_queries import PostgresQueries
-from src.models.project import Project
+from src.models import Project
 
 
-class PostgresProjectRepository(PostgresQueries, IProjectRepository):
+class PostgresProjectRepository(IProjectRepository):
+    def __init__(self, pool: pool):
+        self.pool = pool
+
     async def save(self, project: Project) -> None:
-        await self._execute("""
+        await self.pool.execute("""
             insert into projects (id, stream, topic) values
                 ($1, $2, $3)
             on conflict (id) do update set
@@ -14,7 +17,7 @@ class PostgresProjectRepository(PostgresQueries, IProjectRepository):
         """, project.id, project.zulip_stream, project.zulip_topic)
 
     async def get_by_id(self, project_id: int) -> Project | None:
-        res = await self._fetch_row("""
+        res = await self.pool.fetchrow("""
             select id, stream, topic
             from projects
             where id = $1;
@@ -24,7 +27,7 @@ class PostgresProjectRepository(PostgresQueries, IProjectRepository):
         return Project(res["id"], res["stream"], res["topic"])
 
     async def get_all(self) -> list[Project]:
-        res = await self._fetch("""
+        res = await self.pool.fetch("""
             select id, stream, topic
             from projects;
         """)
@@ -35,7 +38,7 @@ class PostgresProjectRepository(PostgresQueries, IProjectRepository):
         ) for elem in res]
 
     async def delete(self, project_id: int) -> None:
-        await self._execute("""
+        await self.pool.execute("""
             delete
             from projects
             where id = $1

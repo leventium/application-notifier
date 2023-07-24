@@ -2,9 +2,10 @@ import os
 from configparser import ConfigParser
 from fastapi import Header, HTTPException, status
 from loguru import logger
-from src.models.project import Project
+from src.models import Project
 from src.postgres.project_repository import PostgresProjectRepository
 from src.postgres.application_repository import PostgresApplicationRepository
+from src.container import Container
 from src.interfaces.cabinet_interface import (
     CabinetInterface,
     CabinetConnectionError
@@ -59,8 +60,8 @@ async def get_project(slug: int, stream: str, topic: str) -> Project:
 
 
 async def get_project_repo():
-    return PostgresProjectRepository()
+    return Container.get(PostgresProjectRepository)
 
 
 async def get_application_repo():
-    return PostgresApplicationRepository()
+    return Container.get(PostgresApplicationRepository)

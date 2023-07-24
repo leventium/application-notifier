@@ -1,8 +1,7 @@
 """
 Module providing interfaces for database repositories.
 """
-from src.models.project import Project
-from src.models.application import Application
+from src.models import Project, Application
 
 
 class IProjectRepository:

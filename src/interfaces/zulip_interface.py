@@ -9,13 +9,15 @@ class ZulipInterface:
     """
     Class that provides abstraction under zulip API.
     """
-    def __init__(self) -> None:
+    def __init__(
+            self,
+            zulip_url: str,
+            bot_email: str,
+            bot_token: str
+    ) -> None:
         self.client = httpx.AsyncClient(
-            base_url=os.environ["ZULIP_URL"],
-            auth=(
-                os.environ["BOT_EMAIL"],
-                os.environ["BOT_TOKEN"]
-            )
+            base_url=zulip_url,
+            auth=(bot_email, bot_token)
         )
 
     async def close(self) -> None:

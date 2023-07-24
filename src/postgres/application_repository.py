@@ -1,11 +1,14 @@
+from asyncpg import pool
 from src.interfaces.repositories import IApplicationRepository
-from postgres_queries import PostgresQueries
-from src.models.application import Application
+from src.models import Application
 
 
-class PostgresApplicationRepository(PostgresQueries, IApplicationRepository):
+class PostgresApplicationRepository(IApplicationRepository):
+    def __init__(self, pool: pool):
+        self.pool = pool
+
     async def save(self, app: Application) -> None:
-        await self._execute("""
+        await self.pool.execute("""
             insert into applications (id, name, role, project_id) values
                 ($1, $2, $3, $4)
             on conflict (id) do update set
@@ -15,7 +18,7 @@ class PostgresApplicationRepository(PostgresQueries, IApplicationRepository):
         """, app.id, app.user_name, app.role, app.project_id)
 
     async def get_by_id(self, app_id: int) -> Application | None:
-        res = await self._fetch_row("""
+        res = await self.pool.fetchrow("""
             select id, name, role, project_id
             from applications
             where id = $1;
@@ -30,7 +33,7 @@ class PostgresApplicationRepository(PostgresQueries, IApplicationRepository):
         )
 
     async def get_by_project_id(self, project_id: int) -> list[Application]:
-        res = await self._fetch("""
+        res = await self.pool.fetch("""
             select id, name, role, project_id
             from applications
             where project_id = $1;
