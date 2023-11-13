@@ -9,16 +9,19 @@ packages = [{include = "application_notifier"}]
 [tool.poetry.dependencies]
 python = "^3.10"
 httpx = "^0.23.1"
-pymongo = "^4.3.3"
 python-dotenv = "^0.21.0"
-
-[tool.poetry.group.server.dependencies]
+loguru = "^0.7.0"
 fastapi = "^0.87.0"
 uvicorn = "^0.20.0"
+asyncpg = "^0.27.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.0"
 flake8 = "^6.0.0"
+flake8-import-order = "^0.18.2"
+flake8-docstrings = "^1.7.0"
+flake8-builtins = "^2.1.0"
+flake8-quotes = "^3.3.2"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,38 +1,37 @@
 import httpx
-from get_logger import get_logger
+from loguru import logger
+from src.models import Project, Application
 
 
-logger = get_logger(__name__)
-
-
-class CabinetInterface:
-    def __init__(self, base_url: str):
+class CabinetClient:
+    def __init__(self, base_url):
         self.client = httpx.AsyncClient(base_url=base_url)
 
-    async def get_all_applications(self, project_id: int) -> list[dict]:
-        logger.debug(f"Getting applications for {project_id}.")
+    async def get_project_applications(
+            self, project: Project) -> list[Application]:
+        logger.debug(f"Getting applications for project - {project.id}.")
         try:
             res = await self.client.get(
-                f"/public-api/students/project/application/{project_id}"
+                f"/public-api/students/project/application/{project.id}"
             )
-        except httpx.TimeoutException:
+            res.raise_for_status()
+        except httpx.HTTPError:
             logger.exception(
                 "Error occurred while getting new "
-                f"applications for {project_id} from cabinet."
+                f"applications for {project.id} from cabinet."
             )
             raise CabinetConnectionError(
-                "Timeout limit exited while requesting cabinet."
+                "Error occurred while requesting cabinet."
             )
-        logger.debug(f"Applications for {project_id} were successfully got.")
+        logger.debug(f"Applications for {project.id} were successfully got.")
         applications = []
-        for elem in res.json()["data"]:
-            new_app = {
-                "id": elem["id"],
-                "userId": elem["userId"],
-                "name": elem["name"],
-                "role": elem["role"]
-            }
-            applications.append(new_app)
+        for app in res.json()["data"]:
+            applications.append(Application(
+                app["id"],
+                project.id,
+                app["name"],
+                app["role"]
+            ))
         return applications
 
     async def get_project_id_from_slug(self, slug: int) -> int | None:
@@ -40,15 +39,16 @@ class CabinetInterface:
         try:
             res = await self.client.get("/public-api/projects", params={
                 "searchQuery": slug,
-                "statusIds[]": 2
+                "statusIds[]": [1, 2]
             })
-        except httpx.TimeoutException:
+            res.raise_for_status()
+        except httpx.HTTPError:
             logger.exception(
                 "Error occurred while getting project "
                 f"id for {slug} from cabinet."
             )
             raise CabinetConnectionError(
-                "Timeout limit exited while requesting cabinet."
+                "Error occurred while requesting cabinet."
             )
         try:
             for project in res.json()["data"]["projects"]:
@@ -57,10 +57,10 @@ class CabinetInterface:
                     return project["id"]
         except TypeError:
             logger.warning("Invalid JSON structure.")
-            logger.debug(res.json())
+            logger.warning(res.json())
         except KeyError:
             logger.warning("Invalid JSON structure.")
-            logger.debug(res.json())
+            logger.warning(res.json())
         return None
 
     async def close(self) -> None:
